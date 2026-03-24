@@ -1,0 +1,12 @@
+{
+  "name": "codex/review-team-demo",
+  "description": "Deliberately vulnerable dependency manifest for audit demonstrations.",
+  "require": {
+    "symfony/http-foundation": "2.7.0"
+  },
+  "config": {
+    "audit": {
+      "block-insecure": false
+    }
+  }
+}

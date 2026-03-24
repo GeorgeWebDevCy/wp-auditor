@@ -31,6 +31,15 @@ class ReportRepository {
 
 	public function register_meta_boxes(): void {
 		add_meta_box(
+			'mcp-auditor-email-preview',
+			__( 'Review Email Preview', 'mcp-auditor' ),
+			array( $this, 'render_email_meta_box' ),
+			self::POST_TYPE,
+			'normal',
+			'high'
+		);
+
+		add_meta_box(
 			'mcp-auditor-report-payload',
 			__( 'Structured Report', 'mcp-auditor' ),
 			array( $this, 'render_payload_meta_box' ),
@@ -38,6 +47,17 @@ class ReportRepository {
 			'normal',
 			'default'
 		);
+	}
+
+	public function render_email_meta_box( \WP_Post $post ): void {
+		$email_preview = get_post_meta( $post->ID, '_mcp_auditor_email_preview', true );
+
+		if ( empty( $email_preview ) ) {
+			echo '<p>' . esc_html__( 'No review email preview is stored for this entry.', 'mcp-auditor' ) . '</p>';
+			return;
+		}
+
+		echo '<textarea readonly rows="22" style="width:100%;font-family:monospace;">' . esc_textarea( $email_preview ) . '</textarea>';
 	}
 
 	public function render_payload_meta_box( \WP_Post $post ): void {
@@ -55,20 +75,8 @@ class ReportRepository {
 		$artifact_label = isset( $report['artifact']['display_name'] ) ? $report['artifact']['display_name'] : __( 'Unknown artifact', 'mcp-auditor' );
 		$type           = isset( $report['artifact']['type'] ) ? ucfirst( (string) $report['artifact']['type'] ) : __( 'Artifact', 'mcp-auditor' );
 		$summary        = isset( $report['summary']['text'] ) ? (string) $report['summary']['text'] : __( 'Audit completed.', 'mcp-auditor' );
-		$issues         = isset( $report['issues'] ) && is_array( $report['issues'] ) ? $report['issues'] : array();
-
-		$content_lines = array( $summary, '' );
-
-		if ( ! empty( $issues ) ) {
-			$content_lines[] = __( 'Issues', 'mcp-auditor' ) . ':';
-			foreach ( array_slice( $issues, 0, 20 ) as $issue ) {
-				$content_lines[] = sprintf(
-					'- [%s] %s',
-					isset( $issue['severity'] ) ? strtoupper( (string) $issue['severity'] ) : 'INFO',
-					isset( $issue['title'] ) ? (string) $issue['title'] : __( 'Issue', 'mcp-auditor' )
-				);
-			}
-		}
+		$email_subject  = isset( $report['email']['subject'] ) ? (string) $report['email']['subject'] : $summary;
+		$email_body     = isset( $report['email']['body'] ) ? (string) $report['email']['body'] : $summary;
 
 		$post_id = wp_insert_post(
 			array(
@@ -80,9 +88,11 @@ class ReportRepository {
 					$artifact_label,
 					wp_date( 'Y-m-d H:i:s' )
 				),
-				'post_content' => implode( "\n", $content_lines ),
+				'post_content' => $email_body,
 				'meta_input'   => array(
-					'_mcp_auditor_payload' => wp_json_encode( $report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+					'_mcp_auditor_payload'       => wp_json_encode( $report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+					'_mcp_auditor_email_subject' => $email_subject,
+					'_mcp_auditor_email_preview' => $email_body,
 				),
 			),
 			true

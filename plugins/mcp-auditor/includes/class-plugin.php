@@ -79,7 +79,7 @@ class Plugin {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'WP Auditor', 'mcp-auditor' ); ?></h1>
-			<p><?php echo esc_html__( 'The MCP Auditor plugin exposes a tool named mcp-auditor-run-audit through the WordPress MCP Adapter and stores completed runs as private audit reports.', 'mcp-auditor' ); ?></p>
+			<p><?php echo esc_html__( 'The MCP Auditor plugin exposes a tool named mcp-auditor-run-audit through the WordPress MCP Adapter, supports external tooling merges from the WP-CLI flow, and stores completed runs as private audit reports.', 'mcp-auditor' ); ?></p>
 
 			<table class="widefat striped" style="max-width:960px">
 				<thead>
@@ -110,8 +110,10 @@ class Plugin {
 
 			<h2><?php echo esc_html__( 'Useful Commands', 'mcp-auditor' ); ?></h2>
 			<p><code>pwsh ./scripts/list-tools.ps1</code></p>
-			<p><code>pwsh ./scripts/run-audit.ps1 -Slug hello-dolly -Type plugin</code></p>
-			<p><code>wp wp-auditor audit hello-dolly --type=plugin --persist --format=summary</code></p>
+			<p><code>pwsh ./scripts/run-demo-audit.ps1</code></p>
+			<p><code>pwsh ./scripts/run-audit.ps1 -Slug review-team-demo -Type plugin -Format email</code></p>
+			<p><code>wp wp-auditor audit review-team-demo --type=plugin --persist --format=email</code></p>
+			<p><code>wp wp-auditor resolve review-team-demo --type=plugin --format=json</code></p>
 
 			<h2><?php echo esc_html__( 'Recent Reports', 'mcp-auditor' ); ?></h2>
 			<?php if ( empty( $latest_reports ) ) : ?>

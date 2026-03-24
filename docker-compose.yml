@@ -53,6 +53,7 @@ services:
       - ./.wordpress/plugins/abilities-api:/var/www/html/wp-content/plugins/abilities-api
       - ./.wordpress/plugins/mcp-adapter:/var/www/html/wp-content/plugins/mcp-adapter
       - ./plugins/mcp-auditor:/var/www/html/wp-content/plugins/mcp-auditor
+      - ./plugins/review-team-demo:/var/www/html/wp-content/plugins/review-team-demo
 
   wp-cli:
     image: wordpress:cli-php8.2
@@ -82,7 +83,24 @@ services:
       - ./.wordpress/plugins/abilities-api:/var/www/html/wp-content/plugins/abilities-api
       - ./.wordpress/plugins/mcp-adapter:/var/www/html/wp-content/plugins/mcp-adapter
       - ./plugins/mcp-auditor:/var/www/html/wp-content/plugins/mcp-auditor
+      - ./plugins/review-team-demo:/var/www/html/wp-content/plugins/review-team-demo
+      - .:/workspace
     working_dir: /var/www/html
+
+  audit-tools:
+    build:
+      context: .
+      dockerfile: docker/audit-tools/Dockerfile
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./.wordpress/plugins/abilities-api:/var/www/html/wp-content/plugins/abilities-api
+      - ./.wordpress/plugins/mcp-adapter:/var/www/html/wp-content/plugins/mcp-adapter
+      - ./plugins/mcp-auditor:/var/www/html/wp-content/plugins/mcp-auditor
+      - ./plugins/review-team-demo:/var/www/html/wp-content/plugins/review-team-demo
+      - .:/workspace
+    working_dir: /workspace
 
 volumes:
   db_data:

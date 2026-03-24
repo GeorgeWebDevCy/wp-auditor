@@ -1,4 +1,4 @@
 /.env
+/.mcp-auditor/
 /.wordpress/plugins/*
 !/.wordpress/plugins/.gitkeep
-

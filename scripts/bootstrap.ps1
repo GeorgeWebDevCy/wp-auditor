@@ -14,6 +14,7 @@ if (-not (Test-Path $envFile)) {
 
 & (Join-Path $PSScriptRoot "install-wordpress-deps.ps1") -Refresh:$RefreshDependencies
 
+docker compose build audit-tools
 docker compose up -d db wordpress
 
 $bootstrapCommand = @'

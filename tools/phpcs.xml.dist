@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="WP Auditor">
+  <description>WordPress-oriented coding standards used by the external audit-tools container.</description>
+
+  <arg name="extensions" value="php"/>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+  <rule ref="WordPress-Core"/>
+  <rule ref="WordPress-Extra"/>
+</ruleset>

@@ -1,0 +1,11 @@
+includes:
+  - /opt/composer/vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 0
+  scanFiles:
+    - /opt/composer/vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+  excludePaths:
+    analyse:
+      - */vendor/*
+      - */node_modules/*

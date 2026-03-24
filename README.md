@@ -1,71 +1,92 @@
 # wp-auditor
 
-A local WordPress MCP auditing environment built from the PDF spec in [docs/audit-tool-setup.md](docs/audit-tool-setup.md).
+A local WordPress plugin and theme audit stack built from the PDF brief in [docs/audit-tool-setup.md](docs/audit-tool-setup.md).
 
-## What is included
+## What this does
 
-- A Dockerized WordPress + MariaDB stack.
-- Official `abilities-api` and `mcp-adapter` dependencies installed into `.wordpress/plugins`.
-- A custom `mcp-auditor` plugin that:
-  - exposes a direct MCP tool: `mcp-auditor-run-audit`
-  - exposes MCP resources for installed plugins and themes
-  - runs heuristic audits for licensing, security, privacy, uninstall behavior, code quality, and theme accessibility
-  - optionally calls the OpenAI Responses API when `OPENAI_API_KEY` is set
-  - stores reports as private WordPress admin entries under `Tools -> Audit Reports`
-- PowerShell scripts for bootstrap and end-to-end MCP testing.
+The repo now runs audits at multiple levels:
+
+- WordPress policy and packaging checks
+- security and privacy heuristics
+- uninstall and runtime smoke tests
+- performance and quality checks
+- external tooling via a dedicated `audit-tools` container:
+  - PHP lint
+  - PHPCS with WordPress standards
+  - PHPStan
+  - Composer audit
+  - npm audit
+  - ESLint
+
+Reports are saved in WordPress under `Tools -> Audit Reports` and rendered in a review-email style that includes the issue type, file location, why it matters, and how to fix it.
+
+## Stack
+
+- Dockerized WordPress + MariaDB
+- official `abilities-api` and `mcp-adapter` dependencies in `.wordpress/plugins`
+- custom `mcp-auditor` plugin in `plugins/mcp-auditor`
+- fake intentionally-broken demo plugin in `plugins/review-team-demo`
+- `audit-tools` Docker image for external analyzers
 
 ## Quick start
 
-1. Copy `.env.example` to `.env` if you want to customize anything.
+1. Copy `.env.example` to `.env` if you want to customize ports or credentials.
 2. Run:
 
 ```powershell
 pwsh ./scripts/bootstrap.ps1
 ```
 
-3. Open [http://localhost:8081](http://localhost:8081).
+3. Open `http://localhost:8081`
 4. Log into `/wp-admin` with:
    - username: `admin`
    - password: `admin123!`
 
-## Verified commands
+## Useful commands
 
-List the direct MCP tools exposed by the custom server:
+List the direct MCP tools:
 
 ```powershell
 pwsh ./scripts/list-tools.ps1
 ```
 
-Run an audit against the installed Hello Dolly plugin:
+Run the full end-to-end audit pipeline against the demo plugin and print the review email:
 
 ```powershell
-pwsh ./scripts/run-audit.ps1
+pwsh ./scripts/run-demo-audit.ps1
 ```
 
-Run the same audit through WP-CLI instead of MCP:
+Run the full pipeline against any installed plugin or theme:
 
 ```powershell
-docker compose run --rm wp-cli wp wp-auditor audit hello-dolly --type=plugin --format=summary
+pwsh ./scripts/run-audit.ps1 -Slug review-team-demo -Type plugin -Format json
 ```
 
-## OpenAI integration
+Resolve an installed artifact to its runtime paths:
 
-Set `OPENAI_API_KEY` in `.env` to enable deeper code analysis.
+```powershell
+docker compose run --rm wp-cli wp wp-auditor resolve review-team-demo --type=plugin --format=json
+```
 
-Optional tuning:
+Run the WordPress-side audit command directly:
 
-- `WP_AUDITOR_OPENAI_MODEL`
-- `WP_AUDITOR_REASONING_EFFORT`
-- `WP_AUDITOR_AI_FILE_LIMIT`
-- `WP_AUDITOR_AI_CHAR_LIMIT`
+```powershell
+docker compose run --rm wp-cli wp wp-auditor audit review-team-demo --type=plugin --persist --format=email
+```
 
-Without an API key, the system still works end to end using heuristic checks only.
+## Demo plugin
 
-## Files
+`plugins/review-team-demo` is intentionally bad. It includes:
 
-- `docs/audit-tool-setup.md`: Markdown conversion of the original PDF brief.
-- `docker-compose.yml`: local stack definition.
-- `plugins/mcp-auditor`: custom WordPress plugin.
-- `scripts/bootstrap.ps1`: installs dependencies, starts containers, installs WordPress, activates plugins.
-- `scripts/list-tools.ps1`: verifies the MCP tool server.
-- `scripts/run-audit.ps1`: runs a live MCP audit call.
+- missing licensing and uninstall metadata
+- raw superglobals
+- unprepared SQL
+- `eval()` and `unserialize()`
+- insecure upload and redirect handling
+- missing REST `permission_callback`
+- AJAX handlers without capability and nonce checks
+- remote tracking requests and browser-side telemetry
+- cron scheduling and oversized autoloaded options on activation
+- vulnerable Composer and npm dependency locks
+
+The saved report shows how the combined heuristic, runtime, and external-tooling findings are merged into one review email.

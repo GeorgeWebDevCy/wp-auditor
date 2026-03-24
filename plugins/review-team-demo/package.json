@@ -1,0 +1,9 @@
+{
+  "name": "review-team-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deliberately vulnerable JavaScript dependency manifest for audit demonstrations.",
+  "dependencies": {
+    "lodash": "4.17.15"
+  }
+}
