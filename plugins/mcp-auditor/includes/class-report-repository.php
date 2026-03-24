@@ -17,7 +17,7 @@ class ReportRepository {
 				),
 				'public'              => false,
 				'show_ui'             => true,
-				'show_in_menu'        => 'tools.php',
+				'show_in_menu'        => 'mcp-auditor',
 				'supports'            => array( 'title', 'editor' ),
 				'capability_type'     => 'post',
 				'map_meta_cap'        => true,

@@ -18,7 +18,7 @@ The repo now runs audits at multiple levels:
   - npm audit
   - ESLint
 
-Reports are saved in WordPress under `Tools -> Audit Reports` and rendered in a review-email style that includes the issue type, file location, why it matters, and how to fix it.
+Reports are saved in WordPress under the top-level `WP Auditor` menu and rendered in a review-email style that includes the issue type, file location, why it matters, and how to fix it. The plugin also includes a dedicated `Run Audit` screen and a `Settings` screen for storing an OpenAI API key in WordPress.
 
 ## Stack
 

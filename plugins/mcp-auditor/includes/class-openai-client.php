@@ -6,6 +6,15 @@ defined( 'ABSPATH' ) || exit;
 
 class OpenAIClient {
 	/**
+	 * @var Settings
+	 */
+	private $settings;
+
+	public function __construct( Settings $settings ) {
+		$this->settings = $settings;
+	}
+
+	/**
 	 * @param array<string,mixed>           $artifact
 	 * @param array<int,array<string,mixed>> $files
 	 * @param array<int,string>             $checks
@@ -56,19 +65,19 @@ class OpenAIClient {
 	}
 
 	public function is_configured(): bool {
-		return '' !== $this->get_api_key();
+		return '' !== $this->settings->get_api_key();
 	}
 
 	public function get_model(): string {
-		return $this->get_config_value( 'WP_AUDITOR_OPENAI_MODEL', 'gpt-5.4' );
+		return $this->settings->get_model();
 	}
 
 	public function get_reasoning_effort(): string {
-		return $this->get_config_value( 'WP_AUDITOR_REASONING_EFFORT', 'low' );
+		return $this->settings->get_reasoning_effort();
 	}
 
 	public function get_file_limit(): int {
-		return max( 1, (int) $this->get_config_value( 'WP_AUDITOR_AI_FILE_LIMIT', 8 ) );
+		return $this->settings->get_file_limit();
 	}
 
 	/**
@@ -175,7 +184,7 @@ class OpenAIClient {
 			'https://api.openai.com/v1/responses',
 			array(
 				'headers' => array(
-					'Authorization' => 'Bearer ' . $this->get_api_key(),
+					'Authorization' => 'Bearer ' . $this->settings->get_api_key(),
 					'Content-Type'  => 'application/json',
 				),
 				'timeout' => 45,
@@ -255,7 +264,7 @@ class OpenAIClient {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function chunk_code( string $code ): array {
-		$char_limit = max( 2000, (int) $this->get_config_value( 'WP_AUDITOR_AI_CHAR_LIMIT', 12000 ) );
+		$char_limit = $this->settings->get_char_limit();
 		$lines      = preg_split( "/\r\n|\n|\r/", $code );
 		$chunks     = array();
 		$current    = array();
@@ -334,28 +343,6 @@ class OpenAIClient {
 		}
 
 		return '';
-	}
-
-	/**
-	 * @param mixed $default
-	 * @return mixed
-	 */
-	private function get_config_value( string $name, $default ) {
-		if ( defined( $name ) ) {
-			return constant( $name );
-		}
-
-		$value = getenv( $name );
-		if ( false !== $value && '' !== $value ) {
-			return $value;
-		}
-
-		return $default;
-	}
-
-	private function get_api_key(): string {
-		$key = $this->get_config_value( 'OPENAI_API_KEY', '' );
-		return is_string( $key ) ? trim( $key ) : '';
 	}
 
 	private function sanitize_severity( string $severity ): string {
