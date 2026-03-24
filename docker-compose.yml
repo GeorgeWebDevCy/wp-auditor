@@ -1,0 +1,89 @@
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
+      MARIADB_USER: ${WORDPRESS_DB_USER:-wordpress}
+      MARIADB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress}
+      MARIADB_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD:-root}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:6.8.2-php8.2-apache
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${WORDPRESS_HOST_PORT:-8081}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      WP_AUDITOR_OPENAI_MODEL: ${WP_AUDITOR_OPENAI_MODEL:-gpt-5.4}
+      WP_AUDITOR_REASONING_EFFORT: ${WP_AUDITOR_REASONING_EFFORT:-low}
+      WP_AUDITOR_AI_FILE_LIMIT: ${WP_AUDITOR_AI_FILE_LIMIT:-8}
+      WP_AUDITOR_AI_CHAR_LIMIT: ${WP_AUDITOR_AI_CHAR_LIMIT:-12000}
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'FS_METHOD', 'direct' );
+        if ( getenv( 'OPENAI_API_KEY' ) ) {
+          define( 'OPENAI_API_KEY', getenv( 'OPENAI_API_KEY' ) );
+        }
+        if ( getenv( 'WP_AUDITOR_OPENAI_MODEL' ) ) {
+          define( 'WP_AUDITOR_OPENAI_MODEL', getenv( 'WP_AUDITOR_OPENAI_MODEL' ) );
+        }
+        if ( getenv( 'WP_AUDITOR_REASONING_EFFORT' ) ) {
+          define( 'WP_AUDITOR_REASONING_EFFORT', getenv( 'WP_AUDITOR_REASONING_EFFORT' ) );
+        }
+        if ( getenv( 'WP_AUDITOR_AI_FILE_LIMIT' ) ) {
+          define( 'WP_AUDITOR_AI_FILE_LIMIT', (int) getenv( 'WP_AUDITOR_AI_FILE_LIMIT' ) );
+        }
+        if ( getenv( 'WP_AUDITOR_AI_CHAR_LIMIT' ) ) {
+          define( 'WP_AUDITOR_AI_CHAR_LIMIT', (int) getenv( 'WP_AUDITOR_AI_CHAR_LIMIT' ) );
+        }
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./.wordpress/plugins/abilities-api:/var/www/html/wp-content/plugins/abilities-api
+      - ./.wordpress/plugins/mcp-adapter:/var/www/html/wp-content/plugins/mcp-adapter
+      - ./plugins/mcp-auditor:/var/www/html/wp-content/plugins/mcp-auditor
+
+  wp-cli:
+    image: wordpress:cli-php8.2
+    depends_on:
+      - db
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
+      WORDPRESS_SITE_URL: ${WORDPRESS_SITE_URL:-http://localhost:8080}
+      WORDPRESS_SITE_TITLE: ${WORDPRESS_SITE_TITLE:-WP Auditor}
+      WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:-admin}
+      WORDPRESS_ADMIN_PASSWORD: ${WORDPRESS_ADMIN_PASSWORD:-admin123!}
+      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:-admin@example.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      WP_AUDITOR_OPENAI_MODEL: ${WP_AUDITOR_OPENAI_MODEL:-gpt-5.4}
+      WP_AUDITOR_REASONING_EFFORT: ${WP_AUDITOR_REASONING_EFFORT:-low}
+      WP_AUDITOR_AI_FILE_LIMIT: ${WP_AUDITOR_AI_FILE_LIMIT:-8}
+      WP_AUDITOR_AI_CHAR_LIMIT: ${WP_AUDITOR_AI_CHAR_LIMIT:-12000}
+      HOME: /tmp
+      WP_CLI_CACHE_DIR: /tmp/wp-cli/cache
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./.wordpress/plugins/abilities-api:/var/www/html/wp-content/plugins/abilities-api
+      - ./.wordpress/plugins/mcp-adapter:/var/www/html/wp-content/plugins/mcp-adapter
+      - ./plugins/mcp-auditor:/var/www/html/wp-content/plugins/mcp-auditor
+    working_dir: /var/www/html
+
+volumes:
+  db_data:
+  wordpress_data:

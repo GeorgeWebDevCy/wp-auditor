@@ -1,0 +1,4 @@
+/.env
+/.wordpress/plugins/*
+!/.wordpress/plugins/.gitkeep
+
